@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตรวจสอบสิทธิเลือกตั้ง เขต 8 หลักสี่</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .input-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div class="glass-card w-full max-w-md rounded-2xl shadow-xl overflow-hidden p-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
+                <i data-lucide="vote" class="w-6 h-6"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">ตรวจสอบสิทธิเลือกตั้ง</h1>
+            
+            <div class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <p class="text-blue-900 font-semibold">เขตเลือกตั้งที่ 8 หลักสี่</p>
+                <p class="text-blue-700 text-sm mt-0.5">สำนักงานเขตหลักสี่ กรุงเทพมหานคร</p>
+            </div>
+
+            <p class="text-slate-500 text-sm mt-4">กรอกลำดับเพื่อค้นหารายชื่อและหน่วยเลือกตั้ง</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="space-y-4">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </span>
+                <input type="number" id="searchInput" 
+                    class="input-focus w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 placeholder-slate-400 transition-all duration-200"
+                    placeholder="ระบุเลขลำดับ (เช่น 1, 15, 102)"
+                    onkeypress="handleEnter(event)">
+            </div>
+            
+            <button id="searchBtn" onclick="searchVoter()" 
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>ค้นหาข้อมูล</span>
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden mt-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600"></div>
+            <p id="loadingText" class="text-slate-400 text-xs mt-2">กำลังตรวจสอบข้อมูล...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="errorMessage" class="hidden mt-6 p-4 bg-red-50 text-red-600 rounded-xl text-center text-sm animate-fade-in border border-red-100">
+            <div class="flex flex-col items-center gap-2">
+                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                <span id="errorText">ไม่พบข้อมูล</span>
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div id="resultCard" class="hidden mt-8 border-t border-slate-100 pt-6 animate-fade-in">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">ลำดับที่</span>
+                    <h2 id="resSeq" class="text-3xl font-bold text-blue-600">00</h2>
+                </div>
+                <div class="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-100">
+                    มีสิทธิเลือกตั้ง
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div class="mt-1 text-slate-400"><i data-lucide="user" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-0.5">ชื่อ-นามสกุล</p>
+                        <p id="resName" class="font-medium text-slate-800 text-lg">-</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div class="mt-1 text-slate-400"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-0.5">จังหวัด</p>
+                        <p id="resProvince" class="font-medium text-slate-700">-</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div class="mt-1 text-slate-400"><i data-lucide="layers" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 mb-0.5">ชุดที่</p>
+                        <p id="resSet" class="font-medium text-slate-700">-</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                    <div class="mt-1 text-blue-500"><i data-lucide="building-2" class="w-5 h-5"></i></div>
+                    <div>
+                        <p class="text-xs text-blue-400 mb-0.5">สถานที่เลือกตั้ง</p>
+                        <p id="resLocation" class="font-medium text-slate-800">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // ---------------------------------------------------------
+        // ⚙️ การตั้งค่า
+        // ---------------------------------------------------------
+        
+        // ใส่ URL ที่ได้จาก App Script (Deploy as Web App) ตรงนี้
+        const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8DFFpSAG-jFGVRNub3tzH7W4HzEhagn5bspMCcY21INRRPzQkAN6oCB_Y2vWzS0em/exec';
+        
+        // เปลี่ยนเป็น false เมื่อติดตั้ง Script เสร็จแล้วเพื่อใช้ข้อมูลจริง
+        const USE_MOCK_DATA = false; 
+
+        // ---------------------------------------------------------
+
+        const mockData = [
+            { seq: '1', province: 'กรุงเทพมหานคร', set: '1', name: 'นายทดสอบ ระบบดี', location: 'โรงเรียนบางเขน (ไว้ใจได้)' },
+            { seq: '2', province: 'กรุงเทพมหานคร', set: '1', name: 'นางสาวมีนา ใจมั่น', location: 'เต็นท์บริเวณซอย 5' }
+        ];
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') searchVoter();
+        }
+
+        // ฟังก์ชันสำหรับเรียก API พร้อมระบบ Retry อัตโนมัติ
+        async function fetchWithRetry(url, retries = 3, baseDelay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url);
+                    
+                    // เช็คว่า response OK หรือไม่
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    // อ่าน text ก่อน เพราะบางที Google ส่ง error html มาแทน json
+                    const text = await response.text();
+                    
+                    try {
+                        // พยายามแปลงเป็น JSON
+                        return JSON.parse(text);
+                    } catch (e) {
+                        // ถ้าแปลงไม่ได้ แสดงว่า Server อาจจะส่ง HTML Error Page มา (ระบบล่มชั่วคราว)
+                        throw new Error("Invalid JSON response (Server Busy)");
+                    }
+
+                } catch (error) {
+                    const isLastAttempt = i === retries - 1;
+                    console.warn(`Attempt ${i + 1} failed: ${error.message}`);
+                    
+                    if (isLastAttempt) throw error;
+                    
+                    // อัปเดต UI ให้ผู้ใช้รู้ว่ากำลังพยายามใหม่อยู่
+                    document.getElementById('loadingText').textContent = `ระบบกำลังหนาแน่น กำลังพยายามเชื่อมต่อใหม่... (${i + 1}/${retries})`;
+                    
+                    // รอสักครู่ก่อนลองใหม่ (Exponential Backoff + Jitter)
+                    // รอ: 1วิ, 2วิ, 4วิ + เวลาสุ่มเล็กน้อยเพื่อไม่ให้ชนกัน
+                    const delay = baseDelay * Math.pow(2, i) + (Math.random() * 500);
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
+        }
+
+        async function searchVoter() {
+            const input = document.getElementById('searchInput').value.trim();
+            const resultCard = document.getElementById('resultCard');
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const searchBtn = document.getElementById('searchBtn');
+            const loadingText = document.getElementById('loadingText');
+            
+            // Reset UI
+            resultCard.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            loadingText.textContent = "กำลังตรวจสอบข้อมูล..."; // Reset text
+            
+            if (!input) {
+                showError("กรุณาระบุเลขลำดับ");
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            searchBtn.disabled = true; // ป้องกันการกดย้ำ
+
+            try {
+                let result = null;
+
+                if (USE_MOCK_DATA) {
+                    await new Promise(r => setTimeout(r, 800));
+                    result = mockData.find(d => d.seq === input);
+                } else {
+                    // ใช้ฟังก์ชันใหม่ที่มีระบบ Retry
+                    const url = `${APP_SCRIPT_URL}?q=${encodeURIComponent(input)}`;
+                    const json = await fetchWithRetry(url);
+                    
+                    if (json.status === 'success') {
+                        result = json.data;
+                    } else if (json.status === 'not_found') {
+                        result = null;
+                    } else {
+                        throw new Error(json.message || "Unknown error");
+                    }
+                }
+
+                if (result) {
+                    displayResult(result);
+                } else {
+                    showError(`ไม่พบข้อมูลลำดับที่ ${input}`);
+                }
+
+            } catch (error) {
+                console.error("Final Error:", error);
+                showError("ขณะนี้มีผู้ใช้งานจำนวนมาก กรุณารอสักครู่แล้วลองใหม่");
+            } finally {
+                loading.classList.add('hidden');
+                searchBtn.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            document.getElementById('resSeq').textContent = data.seq;
+            document.getElementById('resName').textContent = data.name;
+            document.getElementById('resProvince').textContent = data.province;
+            document.getElementById('resSet').textContent = data.set;
+            document.getElementById('resLocation').textContent = data.location;
+            
+            document.getElementById('resultCard').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function showError(msg) {
+            document.getElementById('errorText').textContent = msg;
+            document.getElementById('errorMessage').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
